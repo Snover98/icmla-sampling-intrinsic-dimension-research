@@ -46,6 +46,10 @@ we'll want to test results for the following choices of $d_{JL}$:
 
 (all values will be rounded when evaluating them)
 
+### Training the data
+We'll follow the lead of [[1]](#1) and show the results for up to 100 epochs.
+
+
 ## References
 <a id="1">[1]</a> Yehezkel, A.,  Elyashiv E. (2024).
 Finding an Optimal Small Sample of Training Dataset for Computer Vision Deep-Learning Models
