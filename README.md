@@ -38,10 +38,10 @@ we'll want to test results for the following choices of $d_{JL}$:
 * $d_{JL} = d_{ID}$
 * $d_{JL} = 2d_{ID}$
 * $d_{JL} = 5d_{ID}$
-* $d_{JL} = d_{ID}log\left(d_{ID}\right)$
+* $d_{JL} = d_{ID}ln\left(d_{ID}\right)$
+* $d_{JL} = d_{ID}log2\left(d_{ID}\right)$
 * $d_{JL} = d_{ID}^{1.5}$
 * $d_{JL} = d_{ID}^2$
-* $d_{JL} = d_{ID}^2log\left(d_{ID}\right)$
 
 (all values will be rounded when evaluating them)
 
