@@ -1,0 +1,3 @@
+Updating `environment.yml`:
+conda env export --from-history > environment.yml
+
