@@ -5,9 +5,15 @@ channels:
   - https://repo.anaconda.com/pkgs/r
   - https://repo.anaconda.com/pkgs/msys2
 dependencies:
-  - python=3.12
-  - notebook
+  - h5py
+  - keras
   - matplotlib
+  - notebook
   - numpy
   - pandas
-
+  - scipy
+  - tensorflow
+  - tqdm
+  - ipywidgets
+  - scikit-learn
+prefix: C:\Users\assaf\.conda\envs\icmla-sampling-intrinsic-dimension-research
