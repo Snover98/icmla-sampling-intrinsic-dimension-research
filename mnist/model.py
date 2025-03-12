@@ -1,8 +1,6 @@
 import torch.nn as nn
 from collections import OrderedDict
 import torch.utils.model_zoo as model_zoo
-from utee import misc
-print = misc.logger.info
 
 model_urls = {
     'mnist': 'http://ml.cs.tsinghua.edu.cn/~chenxi/pytorch-models/mnist-b07bb66b.pth'

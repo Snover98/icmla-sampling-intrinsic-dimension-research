@@ -1,8 +1,9 @@
 from typing import Any
 
 import numpy as np
-from sklearn.random_projection import SparseRandomProjection
 from sklearn.cluster import KMeans
+from sklearn.random_projection import SparseRandomProjection
+
 
 def sample_dataset_random(x: np.ndarray[float],
                           n_samples: int, random_seed: int = None) -> np.ndarray[int]:
@@ -18,7 +19,7 @@ def sample_dataset_random(x: np.ndarray[float],
 def sample_dataset_jls_kmeans(x: np.ndarray[float],
                               n_samples: int, jls_dim: int,
                               random_seed: int = None) -> np.ndarray[int]:
-    train_x_transformed = SparseRandomProjection(jls_dim, random_state=random_seed).fit_transform(x)
+    train_x_transformed = SparseRandomProjection(jls_dim, random_state=random_seed).fit_transform(x.reshape(len(x), -1))
 
     kmeans_labels = KMeans(n_samples, random_state=random_seed).fit_predict(train_x_transformed)
     indices_per_cluster: dict[Any, list[int]] = {
