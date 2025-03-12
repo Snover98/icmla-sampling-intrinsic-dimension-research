@@ -26,7 +26,6 @@ class MLP(nn.Module):
         layers['out'] = nn.Linear(current_dims, n_class)
 
         self.model= nn.Sequential(layers)
-        print(self.model)
 
     def forward(self, input):
         input = input.view(input.size(0), -1)

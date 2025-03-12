@@ -1,8 +1,7 @@
-import torch
+from collections import OrderedDict
+
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-import os
-from collections import OrderedDict
 
 model_urls = {
     'svhn': 'http://ml.cs.tsinghua.edu.cn/~chenxi/pytorch-models/svhn-f564f3d8.pth',
@@ -16,8 +15,6 @@ class SVHN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(n_channel, num_classes)
         )
-        print(self.features)
-        print(self.classifier)
 
     def forward(self, x):
         x = self.features(x)

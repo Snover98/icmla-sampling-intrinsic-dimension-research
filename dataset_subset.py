@@ -24,7 +24,7 @@ def sample_dataset_jls_kmeans(x: np.ndarray[float],
     kmeans_labels = KMeans(n_samples, random_state=random_seed).fit_predict(train_x_transformed)
     indices_per_cluster: dict[Any, list[int]] = {
         c_label: [idx for idx in range(len(kmeans_labels)) if kmeans_labels[idx] == c_label]
-        for c_label in kmeans_labels
+        for c_label in np.unique(kmeans_labels)
     }
 
     rng = np.random

@@ -35,7 +35,7 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
                                transforms.ToTensor(),
                                transforms.Normalize((0.1307,), (0.3081,))
                            ])),
-            batch_size=batch_size, shuffle=True, **kwargs)
+            batch_size=64*64, shuffle=True, **kwargs)
         ds.append(test_loader)
     ds = ds[0] if len(ds) == 1 else ds
     return ds

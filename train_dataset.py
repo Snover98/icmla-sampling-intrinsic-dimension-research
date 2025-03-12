@@ -108,7 +108,6 @@ def train_dataset(model: nn.Module,
         model.train()
 
         for batch_idx, (data, target) in enumerate(train_loader):
-            # data, target = Variable(data), Variable(target)
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
 
@@ -136,22 +135,23 @@ def train_dataset(model: nn.Module,
                 # data, target = Variable(data, volatile=True), Variable(target)
                 output = model(data)
                 test_loss += cross_entropy(output, target).item()
-                pred = output.data.max(1)[1]  # get the index of the max log-probability
-                correct += pred.cpu().eq(indx_target).sum()
+                _, max_idx_class = output.max(dim=1)
+                correct += max_idx_class.cpu().eq(indx_target).sum().item()
 
             test_loss = test_loss / len(test_loader)  # average over number of mini-batch
             acc = 100. * correct / len(test_loader.dataset)
         accuracies.append(acc)
         losses.append(test_loss)
         if test_interval and (epoch % test_interval == 0 or epoch == epochs - 1):
-            print('\tTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-                test_loss, correct, len(test_loader.dataset), acc))
+            print(f'\tTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.0f}%)')
 
-        if stopper.early_stop(test_loss) and epoch >= early_stopping_min_epochs:
+        if stopper.early_stop(test_loss):
             print("Stopped early!")
-            print('\tTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-                test_loss, correct, len(test_loader.dataset), acc))
+            print(f'\tTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.0f}%)')
             break
+
+        if epoch < early_stopping_min_epochs:
+            stopper.counter = 0
 
     return model, accuracies, losses
 

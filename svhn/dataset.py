@@ -14,14 +14,10 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
     kwargs.pop('input_size', None)
     print("Building SVHN data loader with {} workers".format(num_workers))
 
-    def target_transform(target):
-        return int(target) - 1
-
     ds = []
     if train:
         train_dataset = datasets.SVHN(root=data_root, split='train', download=True, transform=transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ]),
-                                      target_transform=target_transform, )
+            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
         if sample_func is not None:
             greyscale_dataset = datasets.SVHN(root=data_root, split='train', download=True,
                                                  transform=transforms.Compose(
@@ -41,9 +37,7 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
                 transform=transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                ]),
-                target_transform=target_transform
-            ),
+                ])),
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)
     ds = ds[0] if len(ds) == 1 else ds
