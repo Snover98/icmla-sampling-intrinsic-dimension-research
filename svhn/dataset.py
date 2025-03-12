@@ -8,7 +8,7 @@ import os
 
 
 def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=True,
-        sample_func: Callable[[np.ndarray[float]], np.ndarray[int]] = None, **kwargs):
+        sample_func: Callable[[np.ndarray[float]], list[int]] = None, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'svhn-data'))
     num_workers = kwargs.setdefault('num_workers', 1)
     kwargs.pop('input_size', None)
@@ -23,7 +23,11 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ]),
                                       target_transform=target_transform, )
         if sample_func is not None:
-            train_dataset = Subset(train_dataset, sample_func(train_dataset.data))
+            greyscale_dataset = datasets.SVHN(root=data_root, split='train', download=True,
+                                                 transform=transforms.Compose(
+                                                     [transforms.Grayscale(num_output_channels=1),
+                                                      transforms.ToTensor()]))
+            train_dataset = Subset(train_dataset, sample_func(greyscale_dataset.data))
 
         train_loader = torch.utils.data.DataLoader(
             train_dataset,

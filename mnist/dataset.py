@@ -8,7 +8,7 @@ import os
 
 
 def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=True,
-        sample_func: Callable[[np.ndarray[float]], np.ndarray[int]] = None, **kwargs):
+        sample_func: Callable[[np.ndarray[float]], list[int]] = None, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'mnist-data'))
     kwargs.pop('input_size', None)
     num_workers = kwargs.setdefault('num_workers', 1)
@@ -18,7 +18,11 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
         train_dataset = datasets.MNIST(root=data_root, train=True, download=True, transform=transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]))
         if sample_func is not None:
-            train_dataset = Subset(train_dataset, sample_func(train_dataset.data))
+            unmodified_dataset = datasets.MNIST(root=data_root, train=True, download=True,
+                                                transform=transforms.Compose(
+                                                    [transforms.Grayscale(num_output_channels=1),
+                                                     transforms.ToTensor()]))
+            train_dataset = Subset(train_dataset, sample_func(unmodified_dataset.data))
 
         train_loader = torch.utils.data.DataLoader(
             train_dataset,

@@ -4,11 +4,9 @@ from typing import Callable
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim import Adam
-from torch.optim.lr_scheduler import LambdaLR
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
 from torch.nn.functional import cross_entropy
+from torch.optim import Adam
+from torch.utils.data import DataLoader
 
 from cifar.dataset import get10
 from cifar.model import cifar10
@@ -17,46 +15,56 @@ from mnist.model import mnist
 from svhn.dataset import get as get_svhn
 from svhn.model import svhn
 
-def train_cfar(sample_func: Callable[[np.ndarray[float]], np.ndarray[int]],
+
+def train_cfar(sample_func: Callable[[np.ndarray[float]], list[int]],
                epochs: int = 100,
                test_interval: int = 5,
                seed: int = None,
                early_stopping_min_epochs: int = 30,
                early_stopping_patience: int = 10
                ) -> tuple[nn.Module, list[float], list[float]]:
+    if seed is not None:
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+
     train_loader, test_loader = get10(32, sample_func=sample_func)
     cifar_model = cifar10(128)
     return train_dataset(cifar_model, train_loader, test_loader, learning_rate=1e-3, weight_decay=0.0,
-                         decreasing_lr=[80], epochs=epochs, test_interval=test_interval,
-                         seed=seed,
+                         epochs=epochs, test_interval=test_interval,
                          early_stopping_min_epochs=early_stopping_min_epochs,
                          early_stopping_patience=early_stopping_patience)
 
-def train_mnist(sample_func: Callable[[np.ndarray[float]], np.ndarray[int]],
+def train_mnist(sample_func: Callable[[np.ndarray[float]], list[int]],
                 epochs: int = 100,
                 test_interval: int = 5,
                 seed: int = None,
                 early_stopping_min_epochs: int = 30,
                 early_stopping_patience: int = 10) -> tuple[nn.Module, list[float], list[float]]:
+    if seed is not None:
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+
     train_loader, test_loader = get_mnist(16, sample_func=sample_func)
     mnist_model = mnist(input_dims=784, n_hiddens=[256, 256], n_class=10)
     return train_dataset(mnist_model, train_loader, test_loader, learning_rate=1e-3, weight_decay=0.0001,
-                         decreasing_lr=[80], epochs=epochs, test_interval=test_interval,
-                         seed=seed,
+                         epochs=epochs, test_interval=test_interval,
                          early_stopping_min_epochs=early_stopping_min_epochs,
                          early_stopping_patience=early_stopping_patience)
 
-def train_svhn(sample_func: Callable[[np.ndarray[float]], np.ndarray[int]],
+def train_svhn(sample_func: Callable[[np.ndarray[float]], list[int]],
                epochs: int = 100,
                test_interval: int = 5,
                seed: int = None,
                early_stopping_min_epochs: int = 30,
                early_stopping_patience: int = 10) -> tuple[nn.Module, list[float], list[float]]:
+    if seed is not None:
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+
     train_loader, test_loader = get_svhn(16, sample_func=sample_func)
     svhn_model = svhn(32)
     return train_dataset(svhn_model, train_loader, test_loader, learning_rate=1e-3, weight_decay=0.001,
-                         decreasing_lr=[80], epochs=epochs, test_interval=test_interval,
-                         seed=seed,
+                         epochs=epochs, test_interval=test_interval,
                          early_stopping_min_epochs=early_stopping_min_epochs,
                          early_stopping_patience=early_stopping_patience)
 
@@ -83,22 +91,11 @@ def train_dataset(model: nn.Module,
                   learning_rate: float,
                   weight_decay: float,
                   epochs: int = 100,
-                  decreasing_lr: list[int] = None,
-                  decreasing_lr_factor: float = 0.1,
                   test_interval: int = 5,
-                  seed: int = None,
                   early_stopping_min_epochs: int = 30,
                   early_stopping_patience: int = 10) -> tuple[nn.Module, list[float], list[float]]:
-    if decreasing_lr is None:
-        decreasing_lr = list()
 
     optimizer = Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    lr_sched = LambdaLR(optimizer, lr_lambda=lambda ep: decreasing_lr_factor if ep in decreasing_lr else 1)
-
-    if seed is not None:
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
 
     if torch.cuda.is_available():
         model.cuda()
@@ -111,7 +108,7 @@ def train_dataset(model: nn.Module,
         model.train()
 
         for batch_idx, (data, target) in enumerate(train_loader):
-            data, target = Variable(data), Variable(target)
+            # data, target = Variable(data), Variable(target)
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
 
@@ -120,7 +117,6 @@ def train_dataset(model: nn.Module,
             loss = cross_entropy(output, target)
             loss.backward()
             optimizer.step()
-            lr_sched.step()
 
         elapse_time = time.time() - t_begin
         speed_epoch = elapse_time / (epoch + 1)
@@ -131,20 +127,20 @@ def train_dataset(model: nn.Module,
         model.eval()
         test_loss = 0
         correct = 0
-        for data, target in test_loader:
-            indx_target = target.clone()
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
+        with torch.no_grad():
+            for data, target in test_loader:
+                indx_target = target.clone()
+                if torch.cuda.is_available():
+                    data, target = data.cuda(), target.cuda()
 
-            # data, target = Variable(data, volatile=True), Variable(target)
-            with torch.no_grad():
+                # data, target = Variable(data, volatile=True), Variable(target)
                 output = model(data)
                 test_loss += cross_entropy(output, target).item()
                 pred = output.data.max(1)[1]  # get the index of the max log-probability
                 correct += pred.cpu().eq(indx_target).sum()
 
-        test_loss = test_loss / len(test_loader)  # average over number of mini-batch
-        acc = 100. * correct / len(test_loader.dataset)
+            test_loss = test_loss / len(test_loader)  # average over number of mini-batch
+            acc = 100. * correct / len(test_loader.dataset)
         accuracies.append(acc)
         losses.append(test_loss)
         if test_interval and (epoch % test_interval == 0 or epoch == epochs - 1):
