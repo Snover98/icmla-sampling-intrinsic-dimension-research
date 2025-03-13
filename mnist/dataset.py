@@ -6,6 +6,8 @@ import torch
 from torchvision import datasets, transforms
 import os
 
+from in_memory_dataset import InMemoryDataset
+
 
 def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=True,
         sample_func: Callable[[np.ndarray[float]], list[int]] = None, **kwargs):
@@ -20,9 +22,9 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
         if sample_func is not None:
             unmodified_dataset = datasets.MNIST(root=data_root, train=True, download=True,
                                                 transform=transforms.Compose(
-                                                    [transforms.Grayscale(num_output_channels=1),
-                                                     transforms.ToTensor()]))
-            train_dataset = Subset(train_dataset, sample_func(unmodified_dataset.data))
+                                                    [transforms.Grayscale(num_output_channels=1)]))
+            train_dataset = Subset(train_dataset,
+                                   sample_func(np.stack([unmodified_dataset[idx][0] for idx in range(len(unmodified_dataset))])))
 
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -30,11 +32,11 @@ def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=Tru
         ds.append(train_loader)
     if val:
         test_loader = torch.utils.data.DataLoader(
-            datasets.MNIST(root=data_root, train=False, download=True,
+            InMemoryDataset(datasets.MNIST(root=data_root, train=False, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                transforms.Normalize((0.1307,), (0.3081,))
-                           ])),
+                           ]))),
             batch_size=64*64, shuffle=True, **kwargs)
         ds.append(test_loader)
     ds = ds[0] if len(ds) == 1 else ds

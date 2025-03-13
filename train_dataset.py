@@ -38,7 +38,7 @@ def train_mnist(sample_func: Callable[[np.ndarray[float]], list[int]],
                 epochs: int = 100,
                 test_interval: int = 5,
                 seed: int = None,
-                early_stopping_min_epochs: int = 30,
+                early_stopping_min_epochs: int = 40,
                 early_stopping_patience: int = 10) -> tuple[nn.Module, list[float], list[float]]:
     if seed is not None:
         torch.manual_seed(seed)
@@ -86,6 +86,7 @@ class EarlyStopper:
                 return True
         return False
 
+
 def train_dataset(model: nn.Module,
                   train_loader: DataLoader, test_loader: DataLoader,
                   learning_rate: float,
@@ -94,7 +95,6 @@ def train_dataset(model: nn.Module,
                   test_interval: int = 5,
                   early_stopping_min_epochs: int = 30,
                   early_stopping_patience: int = 10) -> tuple[nn.Module, list[float], list[float]]:
-
     optimizer = Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     if torch.cuda.is_available():
@@ -145,13 +145,10 @@ def train_dataset(model: nn.Module,
         if test_interval and (epoch % test_interval == 0 or epoch == epochs - 1):
             print(f'\tTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.0f}%)')
 
-        if stopper.early_stop(test_loss):
+        if stopper.early_stop(test_loss) and epoch >= early_stopping_min_epochs:
             print("Stopped early!")
             print(f'\tTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.0f}%)')
             break
-
-        if epoch < early_stopping_min_epochs:
-            stopper.counter = 0
 
     return model, accuracies, losses
 
